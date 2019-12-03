@@ -19,8 +19,13 @@ repositories {
 }
 
 dependencies {
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.8.0-beta4'
     compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.12.1'
     compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.12.1'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-slf4j18-impl', version: '2.12.1'
+
+    compile group: 'xyz.ronella.logging', name: 'logger-plus', version: '1.0.0'
+    compile group: 'xyz.ronella.casual', name: 'trivial-chunk', version: '1.1.0'
 
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.5.2'
     testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.5.2'
