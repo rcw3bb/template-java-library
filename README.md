@@ -1,6 +1,6 @@
 # Java Library Template
 
-A basic gradle project for java application development.
+A basic gradle project for java library development.
 
 ## Usage
 
