@@ -1,4 +1,4 @@
-# Java Application Template
+# Java Library Template
 
 A basic gradle project for java application development.
 
