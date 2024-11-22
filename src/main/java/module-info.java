@@ -1,7 +1,9 @@
+/**
+ * This module is a library module that provides a template for creating a Java library.
+ */
 module template.java.lib {
     requires org.slf4j;
-    requires org.apache.logging.log4j;
-    requires org.apache.logging.log4j.core;
+    requires ch.qos.logback.classic;
     requires java.scripting;
 
     requires xyz.ronella.logging.logger.plus;

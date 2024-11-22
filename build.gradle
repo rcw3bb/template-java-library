@@ -1,76 +1,65 @@
-plugins {
-    id 'java-library'
-    id 'org.javamodularity.moduleplugin' version '1.8.10'
-    id 'jacoco'
-    id 'pmd'
+buildscript {
+    configurations.classpath {
+        resolutionStrategy.activateDependencyLocking()
+    }
 }
 
-group 'xyz.ronella.template'
-version '1.0-SNAPSHOT'
+plugins {
+    id 'java-library'
+    id 'jacoco'
+    id 'pmd'
+    alias(libs.plugins.moduleplugin)
+    //alias(libs.plugins.snyk)
+}
 
-sourceCompatibility = 1.17
+group GROUP
+version VERSION
+
+configurations {
+    mockitoAgent
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    withJavadocJar()
+    withSourcesJar()
+}
 
 repositories {
-    if (Boolean.valueOf(USE_PRIVATE_REPO)) {
-        println "Using Private Repository"
+    mavenCentral()
+}
 
-        maven {
-            url 'https://repo.ronella.xyz/artifactory/java-central'
-            credentials {
-                username "${artifactoryUsername}"
-                password "${artifactoryPassword}"
-            }
-            mavenContent {
-                releasesOnly()
-            }
-        }
-        maven {
-            url 'https://repo.ronella.xyz/archiva/repository/snapshots/'
-            credentials {
-                username "${archivaUsername}"
-                password "${archivaPassword}"
-            }
-            mavenContent {
-                snapshotsOnly()
-            }
-        }
-    }
-    else {
-        println "Using mavenCentral Repository"
-        mavenCentral()
-    }
+dependencyLocking {
+    lockAllConfigurations()
 }
 
 pmd {
     consoleOutput = true
-    toolVersion = "6.45.0"
+    toolVersion = "7.7.0"
     rulesMinimumPriority = 5
-    ruleSetFiles = files('config/pmd/java/custom.xml')
+    ruleSetFiles = files('quality/pmd/java/custom.xml')
+    ruleSets = []
 }
+
+pmdTest.enabled = false
 
 dependencies {
-    implementation 'xyz.ronella.logging:logger-plus:1.1.1'
-    implementation 'xyz.ronella.casual:trivial-chunk:2.9.0'
+    implementation libs.bundles.logger
+    implementation libs.trivial.chunk
 
-    implementation 'org.apache.logging.log4j:log4j-api:2.17.2'
-    implementation 'org.apache.logging.log4j:log4j-core:2.17.2'
-    implementation 'org.apache.logging.log4j:log4j-slf4j18-impl:2.17.2'
-
-    testImplementation 'org.mockito:mockito-inline:4.5.1'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.8.2'
+    testImplementation testLibs.bundles.unit.test
+    mockitoAgent(testLibs.mockito.core) {
+        transitive = false
+    }
 }
 
-task javadocJar(type: Jar) {
-    archiveClassifier = 'javadoc'
-    from javadoc
-}
-
-task sourcesJar(type: Jar) {
-    archiveClassifier = 'sources'
-    from sourceSets.main.allSource
+test {
+    jvmArgs("-javaagent:${configurations.mockitoAgent.asPath}")
+    dependsOn(pmdMain)
+    finalizedBy(jacocoTestReport)
+    //finalizedBy('snyk-test')
+    useJUnitPlatform()
 }
 
 task testsJar(type: Jar, dependsOn: [testClasses]) {
@@ -78,12 +67,17 @@ task testsJar(type: Jar, dependsOn: [testClasses]) {
     from sourceSets.test.output
 }
 
-jar.finalizedBy(javadocJar, sourcesJar, testsJar)
-
-test {
-    dependsOn(pmdMain)
-    finalizedBy(jacocoTestReport)
-    useJUnitPlatform()
+jar {
+    manifest {
+        attributes(
+                "Implementation-Title": project.name,
+                "Implementation-Version": project.version
+        )
+    }
+    dependsOn(test
+            //,'snyk-monitor'
+    )
+    finalizedBy(javadocJar, sourcesJar, testsJar)
 }
 
 jacocoTestReport {
