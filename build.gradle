@@ -17,6 +17,7 @@ version VERSION
 
 configurations {
     mockitoAgent
+    pmdTool
 }
 
 java {
@@ -34,16 +35,6 @@ dependencyLocking {
     lockAllConfigurations()
 }
 
-pmd {
-    consoleOutput = true
-    toolVersion = "7.7.0"
-    rulesMinimumPriority = 5
-    ruleSetFiles = files('quality/pmd/java/custom.xml')
-    ruleSets = []
-}
-
-pmdTest.enabled = false
-
 dependencies {
     implementation libs.bundles.logger
     implementation libs.trivial.chunk
@@ -52,7 +43,16 @@ dependencies {
     mockitoAgent(testLibs.mockito.core) {
         transitive = false
     }
+    pmdTool libs.pmd //This must be the only dependency attached to the pmdTool configuration.
 }
+
+/*snyk {
+    arguments = '--all-sub-projects'
+    severity = 'low'
+    api = "${snykToken}"
+    autoDownload = true
+    autoUpdate = true
+}*/
 
 test {
     jvmArgs("-javaagent:${configurations.mockitoAgent.asPath}")
@@ -74,11 +74,21 @@ jar {
                 "Implementation-Version": project.version
         )
     }
-    dependsOn(test
-            //,'snyk-monitor'
-    )
+    dependsOn(test)
+    //dependsOn('snyk-monitor')
     finalizedBy(javadocJar, sourcesJar, testsJar)
 }
+
+pmd {
+    consoleOutput = true
+    toolVersion = configurations.pmdTool.resolvedConfiguration.firstLevelModuleDependencies.moduleVersion.first
+    rulesMinimumPriority = 5
+    ruleSetFiles = files('quality/pmd/java/custom.xml')
+    ruleSets = []
+    logger.lifecycle("PMD version: ${pmd.toolVersion}")
+}
+
+pmdTest.enabled = false
 
 jacocoTestReport {
     dependsOn test
